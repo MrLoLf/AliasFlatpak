@@ -52,7 +52,6 @@ def main():
         else:
             # Create a general alias for other apps by using the first word of the app name
             alias_name = app_name.split()[0].lower()
-        print(alias_name, app_id)
         aliases[alias_name] = app_id
 
     # Create aliases
