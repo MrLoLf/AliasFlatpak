@@ -22,7 +22,7 @@ def create_alias(alias_name :str , app_id: str):
     with open(bashrc_path, 'a') as bashrc:  # Open .bashrc in append mode
         bashrc.write(command)  # Append the alias command to .bashrc
 
-    print(f"Alias '{alias_name}' for '{app_id}' added to .bashrc. Please restart your terminal or source .bashrc to use it.")
+    print(f"Alias '{alias_name}' for '{app_id}' added to .bashrc.")
 
 def main():
     """
@@ -59,4 +59,6 @@ def main():
         create_alias(alias, app_id)
 
 if __name__ == "__main__":
+    print("Generating aliases for flatpak apps...")
     main()
+    print("Done! Please restart your terminal.")
