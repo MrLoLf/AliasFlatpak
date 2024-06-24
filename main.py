@@ -65,6 +65,9 @@ def main():
             alias_name = app_name.split()[0].lower()
         aliases[alias_name] = app_id
 
+    if not aliases:
+        print("No flatpak apps installed.")
+        return
     # Create aliases for all apps
     create_alias(aliases)
 
