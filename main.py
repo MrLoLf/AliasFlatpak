@@ -54,10 +54,10 @@ def main():
     aliases: dict[str, str] = {}
     for line in flatpak_list.splitlines():
         parts = line.split()  # Split from the right to ensure only the last part is separated
-        if len(parts) < 5:
-            # Ensure there are enough parts for app_name, app_id, version, channel, repo, and system
+        if len(parts) < 2:
+            # Ensure there are enough parts for app_name, app_id
             continue
-        app_id = parts[-5]  # app_id is now the fifth element from the end
+        app_id = parts[1]  # app_id is now the fifth element from the end
         # Reconstruct app_name by joining all parts except the last four and split
         # them by space as they would double and take the first
         app_name = " ".join(parts[:-4]).split()[0]
@@ -76,6 +76,7 @@ def main():
     if not aliases:
         print("No flatpak apps installed.")
         return
+
     # Create aliases for all apps
     create_alias(aliases)
 
