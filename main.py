@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Description: This program should do aliases for flatpack apps that are installed on the system.
+Description: This program should addd aliases for flatpack apps that are installed on
+             the system into the .bashrc file. To acces them via terminal easily.
 Author: Fabian Roscher
 License: MIT
 """
