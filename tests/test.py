@@ -57,7 +57,7 @@ class TestMainFunction(unittest.TestCase):
     @patch('main.create_alias')
     @patch('subprocess.run')
     def test_special_characters_in_app_names(self, mock_run, mock_create_alias):
-        mock_run.return_value.stdout = "GIMP\torg.gimp.GIMP\t2.10.22\tstable\tflathub\tsystem\n"
+        mock_run.return_value.stdout = "GIMP*@!\torg.gimp.GIMP\t2.10.22\tstable\tflathub\tsystem\n"
         main.main()
         mock_create_alias.assert_called_once_with({'gimp': 'org.gimp.GIMP'})
 
