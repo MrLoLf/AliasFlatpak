@@ -47,5 +47,34 @@ class TestMainFunction(unittest.TestCase):
         main.main()
         mock_create_alias.assert_not_called()
 
+    @patch('main.create_alias')
+    @patch('subprocess.run')
+    def test_incorrect_flatpak_list_format(self, mock_run, mock_create_alias):
+        mock_run.return_value.stdout = "IncorrectFormatApp\n"
+        main.main()
+        mock_create_alias.assert_not_called()
+
+    @patch('main.create_alias')
+    @patch('subprocess.run')
+    def test_special_characters_in_app_names(self, mock_run, mock_create_alias):
+        mock_run.return_value.stdout = "GIMP\torg.gimp.GIMP\t2.10.22\tstable\tflathub\tsystem\n"
+        main.main()
+        mock_create_alias.assert_called_once_with({'gimp': 'org.gimp.GIMP'})
+
+    @patch('main.create_alias')
+    @patch('subprocess.run')
+    def test_duplicate_app_ids_different_versions(self, mock_run, mock_create_alias):
+        mock_run.return_value.stdout = "App\tcom.app\t1.0\tstable\tflathub\tsystem\nApp\tcom.app\t2.0\tbeta\tflathub\tsystem\n"
+        main.main()
+        # Assuming the behavior is to create an alias for the latest version only
+        mock_create_alias.assert_called_once_with({'app': 'com.app'})
+
+    @patch('main.create_alias')
+    @patch('subprocess.run')
+    def test_empty_alias_names(self, mock_run, mock_create_alias):
+        mock_run.return_value.stdout = "\t\t\t\t\t\n"
+        main.main()
+        mock_create_alias.assert_not_called()
+
 if __name__ == '__main__':
     unittest.main()
