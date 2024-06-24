@@ -27,9 +27,9 @@ def create_alias(aliases: dict[str, str]):
     with open(bashrc_path, 'r', encoding='UTF-8') as bashrc:  # Open .bashrc in read mode
         existing_aliases: list[str] = bashrc.readlines()  # Read all existing aliases
 
-    new_commands = []
+    new_commands: list[str] = []
     for alias_name, app_id in aliases.items():
-        command = f'alias {alias_name}="flatpak run {app_id}"\n'  # Alias command
+        command: str = f'alias {alias_name}="flatpak run {app_id}"\n'  # Alias command
         if command in existing_aliases:  # Check if the alias command already exists
             print(f"Alias '{alias_name}' for '{app_id}' already exists in .bashrc.")
             continue
@@ -41,6 +41,26 @@ def create_alias(aliases: dict[str, str]):
             bashrc.write(''.join(new_commands))  # Append the alias command to .bashrc
         print("Aliases added to .bashrc.")
 
+def format_alias_name(app_name: str) -> str:
+    """Format the alias name for an application.
+
+    This function takes an application name as input and formats it to be used as an alias.
+    The formatting process involves keeping only alphanumeric characters and spaces, replacing
+    spaces with hyphens, and converting the name to lowercase.
+
+    Args:
+        app_name (str): The name of the application.
+
+    Returns:
+        str: The formatted alias name.
+
+    Example:
+        >>> format_alias_name("My App Name")
+        'my-app-name'
+    """
+    cleaned_name: str = re.sub(r'[^a-zA-Z0-9 ]', '', app_name)
+    formatted_name: str = cleaned_name.replace(" ", "-").lower()
+    return formatted_name
 
 def main():
     """
@@ -57,37 +77,40 @@ def main():
     # Parse the flatpak list and create aliases
     aliases: dict[str, str] = {}
     for line in flatpak_list.splitlines():
-        parts = line.split()  # Split from the right to ensure only the last part is separated
+        # Split from the right to ensure only the last part is separated
+        parts: list[str] = line.split()
         if len(parts) < 2:
             # Ensure there are enough parts for app_name, app_id
             continue
 
         # This regex captures two potential parts that could be the app ID
-        match = re.search(r'([\w.-]+)\s+([\w.-]+)\s+([\w.-]+)\s+([\w.-]+)\s+system$', line)
+        match: re.Match[str] = re.search(
+            r'([\w.-]+)\s+([\w.-]+)\s+([\w.-]+)\s+([\w.-]+)\s+system$', line
+        )
         if not match:
             continue
 
         # Check which group looks more like an app ID (usually contains dots)
+        app_id: str = match.group(2)
         if '.' in match.group(1):
-            app_id = match.group(1)
-        else:
-            app_id = match.group(2)
+            app_id: str = match.group(1)
+
         # Reconstruct app_name by joining all parts except the last five
         # if the app name contains spaces it's going to be blank so we
         # join all parts except the last four
-        app_name = " ".join(parts[:-5])
+        app_name: str = " ".join(parts[:-5])
         if not app_name:
-            app_name = "".join(parts[:-4])
+            app_name: str = "".join(parts[:-4])
         # Custom aliases for specific apps
         if app_id == "com.bitwarden.desktop":
-            alias_name = "bw"
+            alias_name: str = "bw"
         elif app_id == "com.github.xournalpp.xournalpp":
-            alias_name = "xournal"
+            alias_name: str = "xournal"
         elif app_id == "com.spotify.Client":
-            alias_name = "sp"
+            alias_name: str = "sp"
         else:
             # Replace spaces with hyphens for the alias name
-            alias_name = app_name.replace(" ", "-").lower()
+            alias_name: str = format_alias_name(app_name)
         aliases[alias_name] = app_id
 
     if not aliases:
