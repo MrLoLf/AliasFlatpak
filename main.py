@@ -44,7 +44,8 @@ def create_alias(aliases: dict[str, str]):
 
 def main():
     """
-    Main function of the program.
+    Main function of the program. Runs the flatpak list command and
+    parses the output to create aliases.
 
     Returns:
     None
