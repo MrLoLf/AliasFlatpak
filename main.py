@@ -8,6 +8,7 @@ License: MIT
 
 import subprocess
 import os
+import re
 
 def create_alias(aliases: dict[str, str]):
     """
@@ -39,6 +40,7 @@ def create_alias(aliases: dict[str, str]):
             bashrc.write(''.join(new_commands))  # Append the alias command to .bashrc
         print("Aliases added to .bashrc.")
 
+
 def main():
     """
     Main function of the program.
@@ -57,21 +59,32 @@ def main():
         if len(parts) < 2:
             # Ensure there are enough parts for app_name, app_id
             continue
-        app_id = parts[1]  # app_id is now the fifth element from the end
-        # Reconstruct app_name by joining all parts except the last four and split
-        # them by space as they would double and take the first
-        app_name = " ".join(parts[:-4]).split()[0]
-        # Custom aliases for specific apps
-        if app_id == "com.bitwarden.desktop":
-            alias_name = "bw"
-        elif app_id == "com.github.xournalpp.xournalpp":
-            alias_name = "xournal"
-        elif app_id == "com.spotify.Client":
-            alias_name = "sp"
-        else:
-            # Create a general alias for other apps by using the first word of the app name
-            alias_name = app_name.split()[0].lower()
-        aliases[alias_name] = app_id
+
+        # This regex captures two potential parts that could be the app ID
+        match = re.search(r'([\w.-]+)\s+([\w.-]+)\s+([\w.-]+)\s+([\w.-]+)\s+system$', line)
+        if match:
+            # Check which group looks more like an app ID (usually contains dots)
+            if '.' in match.group(1):
+                app_id = match.group(1)
+            else:
+                app_id = match.group(2)
+            # Reconstruct app_name by joining all parts except the last five
+            # if the app name contains spaces it's going to be blank so we
+            # join all parts except the last four
+            app_name = " ".join(parts[:-5])
+            if not app_name:
+                app_name = "".join(parts[:-4])
+            # Custom aliases for specific apps
+            if app_id == "com.bitwarden.desktop":
+                alias_name = "bw"
+            elif app_id == "com.github.xournalpp.xournalpp":
+                alias_name = "xournal"
+            elif app_id == "com.spotify.Client":
+                alias_name = "sp"
+            else:
+                # Replace spaces with hyphens for the alias name
+                alias_name = app_name.replace(" ", "-").lower()
+            aliases[alias_name] = app_id
 
     if not aliases:
         print("No flatpak apps installed.")
