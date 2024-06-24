@@ -1,6 +1,10 @@
-# Description: This program should do aliases for flatpack apps that are installed on the system.
-# Author: Fabian Roscher
-# License: MIT
+#!/usr/bin/env python3
+
+"""
+Description: This program should do aliases for flatpack apps that are installed on the system.
+Author: Fabian Roscher
+License: MIT
+"""
 
 import subprocess
 import os
@@ -18,7 +22,7 @@ def create_alias(aliases: dict[str, str]):
     """
     home_dir: str = os.path.expanduser('~')  # Get the home directory
     bashrc_path: str = os.path.join(home_dir, '.bashrc')  # Path to .bashrc
-    with open(bashrc_path, 'r') as bashrc:  # Open .bashrc in read mode
+    with open(bashrc_path, 'r', encoding='UTF-8') as bashrc:  # Open .bashrc in read mode
         existing_aliases: list[str] = bashrc.readlines()  # Read all existing aliases
 
     new_commands = []
@@ -31,8 +35,8 @@ def create_alias(aliases: dict[str, str]):
         print(f"Alias '{alias_name}' for '{app_id}'. Will be added to .bashrc.")
 
     if new_commands:
-        with open(bashrc_path, 'a') as bashrc:  # Open .bashrc in append mode
-                bashrc.write(''.join(new_commands))  # Append the alias command to .bashrc
+        with open(bashrc_path, 'a', encoding='UTF-8') as bashrc:  # Open .bashrc in append mode
+            bashrc.write(''.join(new_commands))  # Append the alias command to .bashrc
         print("Aliases added to .bashrc.")
 
 def main():
@@ -43,16 +47,20 @@ def main():
     None
     """
     # Get the list of flatpak apps
-    flatpak_list = subprocess.run(['flatpak', 'list'], capture_output=True, text=True, check=True).stdout
+    flatpak_list = subprocess.run(['flatpak', 'list'],
+                                  capture_output=True, text=True, check=True).stdout
 
     # Parse the flatpak list and create aliases
     aliases: dict[str, str] = {}
     for line in flatpak_list.splitlines():
         parts = line.split()  # Split from the right to ensure only the last part is separated
         if len(parts) < 5:
-            continue  # Ensure there are enough parts for app_name, app_id, version, channel, repo, and system
+            # Ensure there are enough parts for app_name, app_id, version, channel, repo, and system
+            continue
         app_id = parts[-5]  # app_id is now the fifth element from the end
-        app_name = " ".join(parts[:-4]).split()[0]  # Reconstruct app_name by joining all parts except the last four and split them by space as they would double and take the first
+        # Reconstruct app_name by joining all parts except the last four and split
+        # them by space as they would double and take the first
+        app_name = " ".join(parts[:-4]).split()[0]
         # Custom aliases for specific apps
         if app_id == "com.bitwarden.desktop":
             alias_name = "bw"
