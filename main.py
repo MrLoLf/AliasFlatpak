@@ -16,12 +16,18 @@ def create_alias(alias_name :str , app_id: str):
     Returns:
     None
     """
-    home_dir = os.path.expanduser('~')  # Get the home directory
-    bashrc_path = os.path.join(home_dir, '.bashrc')  # Path to .bashrc
-    command = f'alias {alias_name}="flatpak run {app_id}"\n'  # Alias command
-    with open(bashrc_path, 'a') as bashrc:  # Open .bashrc in append mode
-        bashrc.write(command)  # Append the alias command to .bashrc
+    home_dir: str = os.path.expanduser('~')  # Get the home directory
+    bashrc_path: str = os.path.join(home_dir, '.bashrc')  # Path to .bashrc
+    command: str = f'alias {alias_name}="flatpak run {app_id}"\n'  # Alias command
+    with open(bashrc_path, 'r') as bashrc:  # Open .bashrc in read mode
+        existing_aliases: list[str] = bashrc.readlines()  # Read all existing aliases
 
+    if command in existing_aliases:  # Check if the alias command already exists
+        print(f"Alias '{alias_name}' for '{app_id}' already exists in .bashrc.")
+        return
+
+    with open(bashrc_path, 'a') as bashrc:  # Open .bashrc in append mode
+            bashrc.write(command)  # Append the alias command to .bashrc
     print(f"Alias '{alias_name}' for '{app_id}' added to .bashrc.")
 
 def main():
