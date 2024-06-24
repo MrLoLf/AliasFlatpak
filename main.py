@@ -5,7 +5,7 @@
 import subprocess
 import os
 
-def create_alias(alias_name :str , app_id: str):
+def create_alias(aliases: dict[str, str]):
     """
     Creates an alias for a flatpak app and appends it to .bashrc.
 
@@ -18,17 +18,22 @@ def create_alias(alias_name :str , app_id: str):
     """
     home_dir: str = os.path.expanduser('~')  # Get the home directory
     bashrc_path: str = os.path.join(home_dir, '.bashrc')  # Path to .bashrc
-    command: str = f'alias {alias_name}="flatpak run {app_id}"\n'  # Alias command
     with open(bashrc_path, 'r') as bashrc:  # Open .bashrc in read mode
         existing_aliases: list[str] = bashrc.readlines()  # Read all existing aliases
 
-    if command in existing_aliases:  # Check if the alias command already exists
-        print(f"Alias '{alias_name}' for '{app_id}' already exists in .bashrc.")
-        return
+    new_commands = []
+    for alias_name, app_id in aliases.items():
+        command = f'alias {alias_name}="flatpak run {app_id}"\n'  # Alias command
+        if command in existing_aliases:  # Check if the alias command already exists
+            print(f"Alias '{alias_name}' for '{app_id}' already exists in .bashrc.")
+            continue
+        new_commands.append(command)
+        print(f"Alias '{alias_name}' for '{app_id}'. Will be added to .bashrc.")
 
-    with open(bashrc_path, 'a') as bashrc:  # Open .bashrc in append mode
-            bashrc.write(command)  # Append the alias command to .bashrc
-    print(f"Alias '{alias_name}' for '{app_id}' added to .bashrc.")
+    if new_commands:
+        with open(bashrc_path, 'a') as bashrc:  # Open .bashrc in append mode
+                bashrc.write(''.join(new_commands))  # Append the alias command to .bashrc
+        print("Aliases added to .bashrc.")
 
 def main():
     """
@@ -41,7 +46,7 @@ def main():
     flatpak_list = subprocess.run(['flatpak', 'list'], capture_output=True, text=True, check=True).stdout
 
     # Parse the flatpak list and create aliases
-    aliases = {}
+    aliases: dict[str, str] = {}
     for line in flatpak_list.splitlines():
         parts = line.split()  # Split from the right to ensure only the last part is separated
         if len(parts) < 5:
@@ -60,9 +65,8 @@ def main():
             alias_name = app_name.split()[0].lower()
         aliases[alias_name] = app_id
 
-    # Create aliases
-    for alias, app_id in aliases.items():
-        create_alias(alias, app_id)
+    # Create aliases for all apps
+    create_alias(aliases)
 
 if __name__ == "__main__":
     print("Generating aliases for flatpak apps...")
