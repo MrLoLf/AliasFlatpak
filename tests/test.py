@@ -33,5 +33,19 @@ class TestMainFunction(unittest.TestCase):
         main.main()
         mock_create_alias.assert_not_called()
 
+    @patch('main.create_alias')
+    @patch('subprocess.run')
+    def test_multiple_app_alias_creation(self, mock_run, mock_create_alias):
+        mock_run.return_value.stdout = "App1\tcom.app1\t1.0\tstable\tflathub\tsystem\nApp2\tcom.app2\t2.0\tstable\tflathub\tsystem\n"
+        main.main()
+        mock_create_alias.assert_called_once_with({'app1': 'com.app1', 'app2': 'com.app2'})
+
+    @patch('main.create_alias')
+    @patch('subprocess.run')
+    def test_empty_flatpak_list(self, mock_run, mock_create_alias):
+        mock_run.return_value.stdout = "\n"
+        main.main()
+        mock_create_alias.assert_not_called()
+
 if __name__ == '__main__':
     unittest.main()
