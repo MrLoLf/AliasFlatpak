@@ -10,6 +10,8 @@ License: MIT
 import subprocess
 import os
 import re
+import argparse
+import sys
 
 def create_alias(aliases: dict[str, str]):
     """
@@ -22,6 +24,7 @@ def create_alias(aliases: dict[str, str]):
     Returns:
     None
     """
+    print("Generating aliases for flatpak apps...")
     home_dir: str = os.path.expanduser('~')  # Get the home directory
     bashrc_path: str = os.path.join(home_dir, '.bashrc')  # Path to .bashrc
     with open(bashrc_path, 'r', encoding='UTF-8') as bashrc:  # Open .bashrc in read mode
@@ -34,12 +37,46 @@ def create_alias(aliases: dict[str, str]):
             print(f"Alias '{alias_name}' for '{app_id}' already exists in .bashrc.")
             continue
         new_commands.append(command)
-        print(f"Alias '{alias_name}' for '{app_id}'. Will be added to .bashrc.")
+        print(f"Alias '{alias_name}' for '{app_id}' will be added to .bashrc.")
 
     if new_commands:
         with open(bashrc_path, 'a', encoding='UTF-8') as bashrc:  # Open .bashrc in append mode
             bashrc.write(''.join(new_commands))  # Append the alias command to .bashrc
         print("Aliases added to .bashrc.")
+
+def remove_alias(alias_name: str):
+    """
+    Removes an alias for a flatpak app from .bashrc.
+
+    Parameters:
+    - alias_name (str): The name of the alias.
+
+    Returns:
+    None
+    """
+    print("Removing alias for flatpak app...")
+    home_dir: str = os.path.expanduser('~')  # Get the home directory
+    bashrc_path: str = os.path.join(home_dir, '.bashrc')  # Path to .bashrc
+    with open(bashrc_path, 'r', encoding='UTF-8') as bashrc:  # Open .bashrc in read mode
+        existing_aliases: list[str] = bashrc.readlines()  # Read all existing aliases
+
+    removed: bool = False
+    new_commands: list[str] = []
+    for line in existing_aliases:
+        if line.startswith(f'alias {alias_name}='):  # Check if the alias command exists
+            removed = True
+            print(f"Alias '{alias_name}' found in .bashrc.")
+        else:
+            new_commands.append(line)
+
+    if removed:
+        with open(bashrc_path, 'w', encoding='UTF-8') as bashrc:  # Open .bashrc in write mode
+            bashrc.write(''.join(new_commands))  # Write the new alias commands to .bashrc
+        print("Aliases removed from .bashrc.")
+    else:
+        print(f"Alias '{alias_name}' not found in .bashrc.")
+
+
 
 def format_alias_name(app_name: str) -> str:
     """Format the alias name for an application.
@@ -62,14 +99,14 @@ def format_alias_name(app_name: str) -> str:
     formatted_name: str = cleaned_name.replace(" ", "-").lower()
     return formatted_name
 
-def main():
+def get_flatpak_apps() -> dict[str, str]:
     """
-    Main function of the program. Runs the flatpak list command and
-    parses the output to create aliases.
+    Retrieves a dictionary of flatpak app aliases.
 
     Returns:
-    None
+        A dictionary where the keys are the app aliases and the values are the app IDs.
     """
+
     # Get the list of flatpak apps
     flatpak_list = subprocess.run(['flatpak', 'list'],
                                   capture_output=True, text=True, check=True).stdout
@@ -101,13 +138,17 @@ def main():
         app_name: str = " ".join(parts[:-5])
         if not app_name:
             app_name: str = "".join(parts[:-4])
+
         # Custom aliases for specific apps
         if app_id == "com.bitwarden.desktop":
             alias_name: str = "bw"
+            aliases["bitwarden"] = app_id
         elif app_id == "com.github.xournalpp.xournalpp":
             alias_name: str = "xournal"
+            aliases["xournalpp"] = app_id
         elif app_id == "com.spotify.Client":
             alias_name: str = "sp"
+            aliases["spotify"] = app_id
         else:
             # Replace spaces with hyphens for the alias name
             alias_name: str = format_alias_name(app_name)
@@ -115,12 +156,81 @@ def main():
 
     if not aliases:
         print("No flatpak apps installed.")
-        return
 
-    # Create aliases for all apps
-    create_alias(aliases)
+    return aliases
+
+def main():
+    """
+    Main function of the program. Runs the flatpak list command and
+    parses the output to create aliases.
+
+    Returns:
+    None
+    """
+
+    parser = argparse.ArgumentParser(description="Manage flatpak app aliases.")
+    parser.add_argument(
+        '-a', '--add',
+        type=str,
+        help='Add a new alias for a flatpak app. With the name of the flatpak app as the argument.'\
+    )
+    parser.add_argument(
+        '-r', '--remove',
+        type=str,
+        help='Remove an alias for a flatpak app. With the name of the alias as the argument.'
+    )
+    parser.add_argument(
+        '-l', '--list',
+        action='store_true',
+        help='List all app names for flatpak apps.'
+    )
+
+
+    args = parser.parse_args()
+    # Check if the user has provided any arguments
+    if args.add is None and args.remove is None and not args.list:
+        print("No arguments provided.")
+        sys.exit(1)
+
+    add_arg = None
+    if args.add:
+        add_arg = args.add.lower()
+
+    remove_arg = None
+    if args.remove:
+        remove_arg = args.remove.lower()
+
+
+    aliases: dict[str, str] = get_flatpak_apps()
+
+    special_aliases: dict[str, str] = {
+        "bitwarden": "bw",
+        "xournal": "xournal",
+        "spotify": "sp"
+    }
+
+    if add_arg == "all":
+        # Create aliases for all apps
+        create_alias(aliases)
+    # Check if the user has entered a specific app to add an alias for
+    elif add_arg in aliases:
+        # check for special
+        if add_arg in special_aliases:
+            create_alias({special_aliases[add_arg]: aliases[add_arg]})
+        create_alias({format_alias_name(add_arg): aliases[add_arg]})
+    elif add_arg:
+        print(f"App '{add_arg}' not found.")
+    elif remove_arg:
+        remove_alias(remove_arg)
+    elif remove_arg == "all":
+        # Remove all aliases
+        for alias in aliases:
+            remove_alias(alias)
+    elif args.list:
+        for alias, app_id in aliases.items():
+            print(f"{alias}: {app_id}")
+
 
 if __name__ == "__main__":
-    print("Generating aliases for flatpak apps...")
     main()
     print("Done! Please restart your terminal.")
