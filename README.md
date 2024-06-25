@@ -28,7 +28,7 @@ To use this project, follow these steps:
 1. Run the script to generate aliases for all installed flatpak apps: `python main.py`
 2. To generate an alias for a specific app, use the `--add` or `-a` flag followed by the app name. For example, to add an alias for Spotify: `python main.py --add spotify`
 3. To remove an alias for a specific app, use the `--remove` or `-r` flag followed by the alias name. For example, to remove an alias for Spotify: `python main.py --remove spotify`
-4. To list all current aliases, use the `--list` or `-l` flag: `python main.py --list`
+4. To list all current aliases possible, use the `--list` or `-l` flag: `python main.py --list`
 5. Restart your terminal or source your shell configuration file (e.g., `source ~/.bashrc`) to apply the changes.
 
 Examples:
@@ -43,7 +43,7 @@ python main.py --add spotify
 # Remove an alias for a specific app (Spotify in this case)
 python main.py --remove spotify
 
-# List all current aliases
+# List all current aliases possible from the flatpak list
 python main.py --list
 ```
 
