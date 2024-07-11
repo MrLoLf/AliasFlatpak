@@ -1,0 +1,11 @@
+[Unit]
+Description=Adds an alias for all flatpaks
+Documentation=https://github.com/MrLoLf/AliasFlatpak
+
+[Service]
+WorkingDirectory=$WORKING_DIR
+ExecStart=$WORKING_DIR/service.sh
+Restart=no
+
+[Install]
+WantedBy=default.target
