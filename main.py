@@ -2,7 +2,7 @@
 
 """
 Description: This program should addd aliases for flatpack apps that are installed on
-             the system into the .bashrc file. To acces them via terminal easily.
+             the system into the given file (defualt: .bashrc). To acces them via terminal easily.
 Author: Fabian Roscher
 License: MIT
 """
@@ -13,68 +13,70 @@ import re
 import argparse
 import sys
 
-def create_alias(aliases: dict[str, str]):
+def create_alias(aliases: dict[str, str], bashrc: str):
     """
-    Creates an alias for a flatpak app and appends it to .bashrc.
+    Creates an alias for a flatpak app and appends it to given file.
 
     Parameters:
     - alias_name (str): The name of the alias.
     - app_id (str): The ID of the flatpak app.
+    - bashrc (str): The File to write aliases to
 
     Returns:
     None
     """
     print("Generating aliases for flatpak apps...")
     home_dir: str = os.path.expanduser('~')  # Get the home directory
-    bashrc_path: str = os.path.join(home_dir, '.bashrc')  # Path to .bashrc
-    with open(bashrc_path, 'r', encoding='UTF-8') as bashrc:  # Open .bashrc in read mode
-        existing_aliases: list[str] = bashrc.readlines()  # Read all existing aliases
+    bashrc_path: str = os.path.join(home_dir, bashrc)  # Path to file
+    with open(bashrc_path, 'r', encoding='UTF-8') as bashrc_file:  # Open in read mode
+        existing_aliases: list[str] = bashrc_file.readlines()  # Read all existing aliases
 
     new_commands: list[str] = []
     for alias_name, app_id in aliases.items():
         command: str = f'alias {alias_name}="flatpak run {app_id}"\n'  # Alias command
         if command in existing_aliases:  # Check if the alias command already exists
-            print(f"Alias '{alias_name}' for '{app_id}' already exists in .bashrc.")
+            print(f"Alias '{alias_name}' for '{app_id}' already exists in {bashrc}.")
             continue
         new_commands.append(command)
-        print(f"Alias '{alias_name}' for '{app_id}' will be added to .bashrc.")
+        print(f"Alias '{alias_name}' for '{app_id}' will be added to {bashrc}.")
 
     if new_commands:
-        with open(bashrc_path, 'a', encoding='UTF-8') as bashrc:  # Open .bashrc in append mode
-            bashrc.write(''.join(new_commands))  # Append the alias command to .bashrc
-        print("Aliases added to .bashrc.")
+        with open(bashrc_path, 'a', encoding='UTF-8') as bashrc_file:  # Open in append mode
+            bashrc_file.write(''.join(new_commands))  # Append the alias command to file
+        print(f"Aliases added to {bashrc}.")
 
-def remove_alias(alias_name: str):
+def remove_alias(alias_name: str, bashrc: str):
     """
-    Removes an alias for a flatpak app from .bashrc.
+    Removes an alias for a flatpak app from file.
 
     Parameters:
     - alias_name (str): The name of the alias.
+    - bashrc (str): The File to remove alias from
 
     Returns:
     None
     """
     print("Removing alias for flatpak app...")
     home_dir: str = os.path.expanduser('~')  # Get the home directory
-    bashrc_path: str = os.path.join(home_dir, '.bashrc')  # Path to .bashrc
-    with open(bashrc_path, 'r', encoding='UTF-8') as bashrc:  # Open .bashrc in read mode
-        existing_aliases: list[str] = bashrc.readlines()  # Read all existing aliases
+    bashrc_path: str = os.path.join(home_dir, bashrc)  # Path to file
+    with open(bashrc_path, 'r', encoding='UTF-8') as bashrc_file:  # Open in read mode
+        existing_aliases: list[str] = bashrc_file.readlines()  # Read all existing aliases
 
     removed: bool = False
     new_commands: list[str] = []
     for line in existing_aliases:
         if line.startswith(f'alias {alias_name}='):  # Check if the alias command exists
             removed = True
-            print(f"Alias '{alias_name}' found in .bashrc.")
+            print(f"Alias '{alias_name}' found in $(bashrc).")
         else:
             new_commands.append(line)
 
     if removed:
-        with open(bashrc_path, 'w', encoding='UTF-8') as bashrc:  # Open .bashrc in write mode
-            bashrc.write(''.join(new_commands))  # Write the new alias commands to .bashrc
-        print("Aliases removed from .bashrc.")
+        with open(bashrc_path, 'w', encoding='UTF-8') as bashrc_file:  # Open in write mode
+            bashrc_file.write(''.join(new_commands))  # Write the new alias commands to file
+        print(f"Aliases removed from {bashrc}.")
     else:
-        print(f"Alias '{alias_name}' not found in .bashrc.")
+        print(f"Alias '{alias_name}' not found in {bashrc}.")
 
 
 
@@ -184,6 +186,12 @@ def main():
         action='store_true',
         help='List all app names for flatpak apps.'
     )
+    parser.add_argument(
+        "--bashrc_file",
+        type=str,
+        nargs='?',
+        default=".bashrc",
+        help="File to write aliases to. Defaults to \".bashrc\"")
 
 
     args = parser.parse_args()
@@ -200,6 +208,10 @@ def main():
     if args.remove:
         remove_arg = args.remove.lower()
 
+    bashrc_file = None
+    if args.bashrc_file:
+        bashrc_file = args.bashrc_file
+
 
     aliases: dict[str, str] = get_flatpak_apps()
 
@@ -211,21 +223,21 @@ def main():
 
     if add_arg == "all":
         # Create aliases for all apps
-        create_alias(aliases)
+        create_alias(aliases, bashrc_file)
     # Check if the user has entered a specific app to add an alias for
     elif add_arg in aliases:
         # check for special
         if add_arg in special_aliases:
-            create_alias({special_aliases[add_arg]: aliases[add_arg]})
-        create_alias({format_alias_name(add_arg): aliases[add_arg]})
+            create_alias({special_aliases[add_arg]: aliases[add_arg]}, bashrc_file)
+        create_alias({format_alias_name(add_arg): aliases[add_arg]}, bashrc_file)
     elif add_arg:
         print(f"App '{add_arg}' not found.")
-    elif remove_arg:
-        remove_alias(remove_arg)
     elif remove_arg == "all":
         # Remove all aliases
         for alias in aliases:
-            remove_alias(alias)
+            remove_alias(alias, bashrc_file)
+    elif remove_arg:
+        remove_alias(remove_arg, bashrc_file)
     elif args.list:
         for alias, app_id in aliases.items():
             print(f"{alias}: {app_id}")

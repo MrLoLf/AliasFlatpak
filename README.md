@@ -7,6 +7,7 @@
   - [Description](#description)
   - [Installation](#installation)
   - [Usage](#usage)
+  - [Systemctl](#systemctl)
   - [Contributing](#contributing)
 
 ## Description
@@ -49,6 +50,14 @@ python main.py --list
 
 Generating aliases for flatpak apps...
 Done! Please restart your Terminal.
+
+## Systemctl
+
+To create a systemctl Service, follow these steps:
+
+1. Run `add_service.sh`
+2. That's it
+
 
 ## Contributing
 
